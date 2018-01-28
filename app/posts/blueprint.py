@@ -31,16 +31,25 @@ def create_post():
 def index():
     q = request.args.get('q')
 
-    if q:
-        posts = Post.query.filter(Post.title.contains(q) | Post.body.contains(q)).all()
+    page = request.args.get('page')
+
+    if page and page.isdigit():
+        page = int(page)
     else:
-        posts = Post.query.all()
+        page = 1
+
+    if q:
+        posts = Post.query.filter(Post.title.contains(q) | Post.body.contains(q))
+    else:
+        posts = Post.query.order_by(Post.created.desc())
 
     for post in posts:
         if post.slug is None:
             post.slug = 'None'
 
-    return render_template('posts/index.html', posts=posts)
+    pages = posts.paginate(page=page, per_page=5)
+
+    return render_template('posts/index.html', pages=pages)
 
 
 @posts.route('/<slug>')
